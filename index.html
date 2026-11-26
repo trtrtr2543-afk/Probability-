@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ห้องทดลองความน่าจะเป็น 3 มิติ | ม.4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1e1b4b;--mute:#5b5f8a;--violet:#7c3aed;--violet-d:#5b21b6;--sky:#bfdbfe;--line:rgba(124,58,237,.16);--glass:rgba(255,255,255,.58);--glass-b:rgba(255,255,255,.78)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'IBM Plex Sans Thai','Noto Sans Thai','Sarabun',system-ui,sans-serif;color:var(--ink);background:linear-gradient(135deg,#eef2ff 0%,#dbeafe 48%,#ede9fe 100%);overflow:hidden}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 430px;height:100vh;height:100dvh;gap:14px;padding:14px}
+.stage{position:relative;border-radius:26px;overflow:hidden;background:radial-gradient(120% 90% at 50% 20%,#ffffff 0%,#e0e7ff 55%,#c7d2fe 100%);box-shadow:0 18px 50px rgba(76,29,149,.16),inset 0 0 0 1px rgba(255,255,255,.8)}
+#c{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:none}
+#c:active{cursor:grabbing}
+.glass{background:var(--glass);backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);border:1px solid var(--glass-b);box-shadow:0 10px 30px rgba(76,29,149,.12)}
+.brand{position:absolute;left:16px;top:16px;padding:10px 16px;border-radius:16px;pointer-events:none}
+.brand b{display:block;font-size:17px;font-weight:700}
+.brand span{font-size:12px;color:var(--mute)}
+.hud{position:absolute;right:16px;top:16px;display:flex;gap:8px}
+.chip{padding:8px 14px;border-radius:14px;font-size:13px;font-weight:600;display:flex;gap:6px;align-items:center}
+.chip i{font-style:normal;color:var(--violet);font-size:15px}
+.hint{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);padding:8px 16px;border-radius:999px;font-size:12.5px;color:var(--mute);white-space:nowrap;pointer-events:none}
+.toast{position:absolute;left:50%;top:76px;transform:translate(-50%,-12px);padding:10px 18px;border-radius:14px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.toast.hit{color:var(--violet-d)}
+.hs{position:absolute;left:0;top:0;z-index:3;display:flex;align-items:center;gap:8px;border:0;background:none;cursor:pointer;font-family:inherit;transform:translate(-9999px,-9999px);will-change:transform}
+.hs .dot{width:30px;height:30px;border-radius:50%;background:var(--violet);color:#fff;font-weight:700;font-size:14px;display:grid;place-items:center;box-shadow:0 0 0 4px rgba(124,58,237,.25),0 6px 16px rgba(76,29,149,.35);animation:pulse 2.2s ease-out infinite;transition:transform .2s}
+.hs:hover .dot,.hs.act .dot{transform:scale(1.18)}
+.hs .tag{padding:5px 11px;border-radius:999px;font-size:12.5px;font-weight:600;color:var(--ink)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(124,58,237,.5),0 6px 16px rgba(76,29,149,.35)}70%{box-shadow:0 0 0 14px rgba(124,58,237,0),0 6px 16px rgba(76,29,149,.35)}100%{box-shadow:0 0 0 0 rgba(124,58,237,0),0 6px 16px rgba(76,29,149,.35)}}
+.card{position:absolute;left:16px;bottom:58px;width:min(340px,calc(100% - 32px));padding:18px 20px 18px;border-radius:20px;z-index:5;opacity:0;transform:translateY(18px) scale(.96);pointer-events:none;transition:opacity .35s,transform .35s cubic-bezier(.2,.9,.3,1.2);border-left:5px solid var(--violet)}
+.card.on{opacity:1;transform:none;pointer-events:auto}
+.card h4{font-size:16px;margin-bottom:6px;padding-right:26px}
+.card p{font-size:14px;line-height:1.7;color:#35386b}
+.card .x{position:absolute;right:10px;top:10px;width:28px;height:28px;border-radius:50%;border:0;background:rgba(124,58,237,.1);color:var(--violet-d);font-size:16px;cursor:pointer}
+.card .big{display:inline-block;margin-top:8px;padding:4px 12px;border-radius:10px;background:var(--violet);color:#fff;font-weight:700;font-size:15px}
+.panel{border-radius:26px;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:12px 12px 0}
+.tab{border:0;border-radius:14px;padding:10px 4px;font-family:inherit;font-size:13.5px;font-weight:600;color:var(--mute);background:transparent;cursor:pointer;transition:background .25s,color .25s}
+.tab:hover{background:rgba(124,58,237,.08)}
+.tab.on{background:var(--violet);color:#fff;box-shadow:0 6px 16px rgba(124,58,237,.35)}
+.tab:focus-visible,.btn:focus-visible,.opt:focus-visible,.hs:focus-visible{outline:3px solid #a78bfa;outline-offset:2px}
+.body{flex:1;overflow-y:auto;padding:18px 20px 22px}
+.pane{display:none}
+.pane.on{display:block;animation:swap .4s cubic-bezier(.2,.8,.3,1)}
+@keyframes swap{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:none}}
+h2{font-size:22px;font-weight:700;margin-bottom:8px}
+.pane>p{font-size:14.5px;line-height:1.8;color:#35386b;margin-bottom:12px}
+.formula{padding:14px 16px;border-radius:16px;background:linear-gradient(135deg,rgba(124,58,237,.14),rgba(96,165,250,.16));font-weight:600;font-size:15px;line-height:1.7;text-align:center;margin:12px 0}
+.formula small{display:block;font-weight:400;color:var(--mute);font-size:12.5px}
+.scale{position:relative;height:12px;border-radius:99px;background:linear-gradient(90deg,#dbeafe,#7c3aed);margin:26px 4px 30px}
+.scale span{position:absolute;top:18px;font-size:12px;color:var(--mute);transform:translateX(-50%)}
+.box{padding:14px 16px;border-radius:16px;background:rgba(255,255,255,.7);border:1px solid var(--line);font-size:14px;line-height:1.75;margin-top:12px}
+.row{margin-bottom:18px}
+.row label{display:flex;justify-content:space-between;font-weight:600;font-size:14.5px;margin-bottom:2px}
+.row label b{color:var(--violet);font-size:18px}
+.row small{color:var(--mute);font-size:12.5px}
+input[type=range]{width:100%;height:30px;accent-color:var(--violet);cursor:pointer}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.stat{padding:12px 6px;border-radius:16px;background:rgba(255,255,255,.75);border:1px solid var(--line);text-align:center}
+.stat b{display:block;font-size:21px;color:var(--violet-d)}
+.stat span{font-size:12px;color:var(--mute)}
+.bar{display:flex;height:22px;border-radius:99px;overflow:hidden;background:#dbeafe;margin:4px 0 6px}
+.bar div{transition:width .5s cubic-bezier(.2,.8,.3,1)}
+.bar .f{background:linear-gradient(90deg,#8b5cf6,#7c3aed)}
+.legend{display:flex;justify-content:space-between;font-size:12.5px;color:var(--mute)}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.btn{border:0;border-radius:14px;padding:11px 16px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;background:var(--violet);color:#fff;box-shadow:0 6px 14px rgba(124,58,237,.3);transition:transform .15s,box-shadow .15s}
+.btn:hover{transform:translateY(-2px)}
+.btn:active{transform:translateY(0)}
+.btn.sec{background:rgba(255,255,255,.85);color:var(--violet-d);box-shadow:inset 0 0 0 1.5px var(--line)}
+canvas#chart{width:100%;height:150px;border-radius:16px;background:rgba(255,255,255,.75);border:1px solid var(--line);display:block}
+.note{font-size:13.5px;line-height:1.75;color:#35386b;margin-top:10px}
+.qi{padding:14px;border-radius:18px;background:rgba(255,255,255,.72);border:1px solid var(--line);margin-bottom:12px}
+.qi h3{font-size:14.5px;line-height:1.6;margin-bottom:10px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.opt{border:1.5px solid var(--line);border-radius:12px;padding:9px 10px;background:#fff;font-family:inherit;font-size:14px;cursor:pointer;text-align:left;transition:all .2s;color:var(--ink)}
+.opt:hover:not(:disabled){border-color:var(--violet)}
+.opt.selected{border-color:var(--violet);background:#f3e8ff;font-weight:600}
+.opt.correct{background:#dcfce7;border-color:#16a34a}
+.opt.wrong{background:#fee2e2;border-color:#dc2626}
+.fb{font-size:13px;line-height:1.65;color:var(--mute);margin-top:8px}
+.fb.good{color:#15803d}.fb.bad{color:#b91c1c}
+.score{display:none;padding:18px;border-radius:18px;background:linear-gradient(135deg,rgba(124,58,237,.16),rgba(96,165,250,.2));text-align:center;line-height:1.7;margin-top:6px}
+.score.on{display:block;animation:swap .45s}
+.score strong{font-size:26px;color:var(--violet-d)}
+.foot{font-size:12px;color:var(--mute);text-align:center;padding:8px 10px 12px}
+@media(max-width:960px){
+.app{grid-template-columns:1fr;grid-template-rows:minmax(0,46fr) minmax(0,54fr)}
+.hint{display:none}
+.card{bottom:12px}
+}
+@media(max-width:560px){.opts{grid-template-columns:1fr}.brand span{display:none}.tab{font-size:12px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+<section class="stage" id="stage">
+<canvas id="c" aria-label="ฉาก 3 มิติแสดงผลลัพธ์ของการทดลองสุ่ม ลากเพื่อหมุน เลื่อนลูกกลิ้งเพื่อซูม"></canvas>
+<div class="brand glass"><b>🔮 ห้องทดลองความน่าจะเป็น</b><span>คณิตศาสตร์ ม.4 · Interactive 3D Lab</span></div>
+<div class="hud">
+<div class="chip glass">P(E)<i id="hudP">0.333</i></div>
+<div class="chip glass">ทดลอง<i id="hudT">0</i>ครั้ง</div>
+</div>
+<div class="toast glass" id="toast"></div>
+<button class="hs" id="hsAll" data-k="all"><span class="dot">Ω</span><span class="tag glass">ผลลัพธ์ทั้งหมด</span></button>
+<button class="hs" id="hsFav" data-k="fav"><span class="dot">★</span><span class="tag glass">ผลลัพธ์ที่สนใจ</span></button>
+<button class="hs" id="hsOth" data-k="oth"><span class="dot">○</span><span class="tag glass">ผลลัพธ์อื่น ๆ</span></button>
+<button class="hs" id="hsDie" data-k="die"><span class="dot">🎲</span><span class="tag glass">ลองทอยลูกเต๋า</span></button>
+<div class="card glass" id="card" role="dialog" aria-live="polite"><button class="x" id="cardX" aria-label="ปิด">×</button><h4 id="cardT"></h4><p id="cardB"></p></div>
+<div class="hint glass">ลากเพื่อหมุน · คลิกขวาลากเพื่อแพน · เลื่อนลูกกลิ้งเพื่อซูม · คลิกจุดเรืองแสงเพื่อดูคำอธิบาย</div>
+</section>
+
+<aside class="panel glass">
+<div class="tabs" role="tablist">
+<button class="tab on" data-p="p1" role="tab">แนวคิด</button>
+<button class="tab" data-p="p2" role="tab">ปรับค่า</button>
+<button class="tab" data-p="p3" role="tab">ทดลองสุ่ม</button>
+<button class="tab" data-p="p4" role="tab">ทดสอบ</button>
+</div>
+<div class="body">
+
+<div class="pane on" id="p1">
+<h2>ความน่าจะเป็นคืออะไร</h2>
+<p>ความน่าจะเป็นคือจำนวนที่บอกโอกาสเกิดเหตุการณ์ เมื่อผลลัพธ์ทุกแบบมีโอกาสเกิดเท่ากันและมีจำนวนจำกัด</p>
+<div class="formula">P(E) = จำนวนผลลัพธ์ที่สนใจ ÷ จำนวนผลลัพธ์ทั้งหมด<small>ในฉาก 3 มิติ ทรงกลมสีม่วงคือผลลัพธ์ที่สนใจ ทรงกลมสีฟ้าคือผลลัพธ์อื่น ๆ</small></div>
+<p>ค่าความน่าจะเป็นอยู่ระหว่าง 0 ถึง 1 ค่าใกล้ 0 หมายถึงเกิดขึ้นได้ยาก ค่าใกล้ 1 หมายถึงมีโอกาสสูง</p>
+<div class="scale"><span style="left:0">0 เป็นไปไม่ได้</span><span style="left:50%">0.5</span><span style="left:100%">1 แน่นอน</span></div>
+<div class="box"><b>ตัวอย่าง</b> ทอยลูกเต๋า 1 ลูก สนใจเลขคู่ มีผลลัพธ์ที่สนใจ 3 แบบ (2, 4, 6) จากทั้งหมด 6 แบบ ดังนั้น P(เลขคู่) = 3/6 = 1/2</div>
+<div class="btns"><button class="btn" id="goLab">ไปปรับค่าในห้องทดลอง</button><button class="btn sec" id="rollBtn">ทอยลูกเต๋า 3 มิติ</button></div>
+</div>
+
+<div class="pane" id="p2">
+<h2>ทดลองปรับค่าความน่าจะเป็น</h2>
+<p>ลาก Slider เพื่อเปลี่ยนจำนวนทรงกลมในฉาก 3 มิติ แล้วสังเกตค่าที่เปลี่ยนทันที</p>
+<div class="row"><label>จำนวนผลลัพธ์ทั้งหมด <b id="totalVal">12</b></label><input type="range" id="total" min="2" max="30" value="12"><small>กำหนดผลลัพธ์ที่เป็นไปได้ทั้งหมด (2–30)</small></div>
+<div class="row"><label>จำนวนผลลัพธ์ที่สนใจ <b id="favVal">4</b></label><input type="range" id="fav" min="0" max="12" value="4"><small>กำหนดผลลัพธ์ที่ทำให้เหตุการณ์ที่สนใจเกิดขึ้น</small></div>
+<div class="stats">
+<div class="stat"><b id="fraction">1/3</b><span>รูปเศษส่วน</span></div>
+<div class="stat"><b id="decimal">0.333</b><span>รูปทศนิยม</span></div>
+<div class="stat"><b id="percent">33.3%</b><span>ร้อยละ</span></div>
+</div>
+<div class="bar"><div class="f" id="favBar"></div></div>
+<div class="legend"><span id="favLabel"></span><span id="otherLabel"></span></div>
+<div class="box" id="explain"></div>
+<div class="btns"><button class="btn sec" id="reset">คืนค่าเริ่มต้น</button><button class="btn" id="example">สุ่มตัวอย่าง</button></div>
+</div>
+
+<div class="pane" id="p3">
+<h2>ทดลองด้วยการสุ่ม</h2>
+<p>ระบบจะสุ่มเลือกทรงกลม 1 ลูกจากฉาก ถ้าได้ลูกสีม่วงถือว่าเกิดเหตุการณ์ที่สนใจ</p>
+<div class="stats">
+<div class="stat"><b id="trials">0</b><span>จำนวนครั้งที่ทดลอง</span></div>
+<div class="stat"><b id="hits">0</b><span>จำนวนครั้งที่เกิดเหตุการณ์</span></div>
+<div class="stat"><b id="relative">—</b><span>ความถี่สัมพัทธ์</span></div>
+</div>
+<canvas id="chart" width="760" height="300"></canvas>
+<div class="legend" style="margin-top:6px"><span>เส้นทึบ: ความถี่สัมพัทธ์</span><span>เส้นประ: ค่าตามทฤษฎี</span></div>
+<div class="btns"><button class="btn" id="once">ทดลอง 1 ครั้ง</button><button class="btn" id="hundred">ทดลอง 100 ครั้ง</button><button class="btn sec" id="clear">ล้างผลการทดลอง</button></div>
+<div class="box" id="compare">ยังไม่มีผลการทดลอง กดปุ่มเพื่อเริ่มสุ่ม</div>
+<p class="note">เมื่อทดลองจำนวนมากขึ้น ความถี่สัมพัทธ์มักมีแนวโน้มเข้าใกล้ความน่าจะเป็นตามทฤษฎี แต่ไม่จำเป็นต้องเท่ากันทุกครั้ง</p>
+</div>
+
+<div class="pane" id="p4">
+<h2>ตรวจสอบความเข้าใจ</h2>
+<p>เลือกคำตอบที่ถูกต้อง 10 ข้อ แล้วกดตรวจคำตอบเพื่อดูคะแนนพร้อมคำอธิบาย</p>
+<div id="quiz"></div>
+<div class="score" id="score"></div>
+<div class="btns"><button class="btn" id="submitQuiz">ตรวจคำตอบและสรุปคะแนน</button><button class="btn sec" id="retry">ทำแบบทดสอบอีกครั้ง</button></div>
+</div>
+
+</div>
+<div class="foot">สื่อการเรียนรู้คณิตศาสตร์ ชั้นมัธยมศึกษาปีที่ 4 · เรื่อง ความน่าจะเป็น</div>
+</aside>
+</div>
+
+<script>
+const SRC={
+ three:['https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js','https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js','https://unpkg.com/three@0.128.0/build/three.min.js'],
+ orbit:['https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js','https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/controls/OrbitControls.js','https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js']
+};
+function showError(msg){
+ const d=document.createElement('div');
+ d.className='glass';
+ d.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);max-width:80%;padding:20px 24px;border-radius:18px;text-align:center;line-height:1.8;font-size:14.5px;z-index:9';
+ d.innerHTML=msg;
+ document.getElementById('stage').appendChild(d);
+}
+function loadAny(list,ok,fail){
+ let i=0;
+ (function next(){
+  if(i>=list.length){fail();return}
+  const s=document.createElement('script');
+  s.src=list[i++];
+  s.onload=ok;
+  s.onerror=()=>{s.remove();next()};
+  document.head.appendChild(s);
+ })();
+}
+const NETERR='<b>โหลดไลบรารี 3 มิติไม่สำเร็จ</b><br>กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต หรือการตั้งค่าไฟร์วอลล์ที่บล็อก cdnjs, jsdelivr และ unpkg แล้วรีเฟรชหน้านี้';
+loadAny(SRC.three,()=>loadAny(SRC.orbit,()=>{
+ try{start()}catch(e){showError('<b>เปิดฉาก 3 มิติไม่ได้</b><br>เบราว์เซอร์อาจไม่รองรับหรือปิด WebGL ไว้ กรุณาเปิดไฟล์นี้ด้วย Chrome, Edge หรือ Safari เวอร์ชันล่าสุด')}
+},()=>showError(NETERR)),()=>showError(NETERR));
+
+function start(){
+const $=id=>document.getElementById(id);
+const MAX=30;
+const stage=$('stage'),canvas=$('c');
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(42,1,.1,100);
+camera.position.set(0,8.5,12.5);
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputEncoding=THREE.sRGBEncoding;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.05;
+
+const controls=new THREE.OrbitControls(camera,canvas);
+controls.enableDamping=true;
+controls.dampingFactor=.07;
+controls.enablePan=true;
+controls.minDistance=5;
+controls.maxDistance=24;
+controls.maxPolarAngle=Math.PI*.49;
+controls.target.set(0,.4,0);
+
+scene.add(new THREE.HemisphereLight(0xffffff,0xc7d2fe,.95));
+const sun=new THREE.DirectionalLight(0xffffff,1.15);
+sun.position.set(6,11,5);
+sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048);
+sun.shadow.camera.left=-9;sun.shadow.camera.right=9;sun.shadow.camera.top=9;sun.shadow.camera.bottom=-9;
+sun.shadow.camera.near=.5;sun.shadow.camera.far=30;
+sun.shadow.bias=-.0004;
+sun.shadow.radius=4;
+scene.add(sun);
+const fill=new THREE.DirectionalLight(0xa5b4fc,.4);
+fill.position.set(-7,4,-6);
+scene.add(fill);
+
+const floor=new THREE.Mesh(new THREE.CylinderGeometry(4.7,4.9,.3,80),new THREE.MeshStandardMaterial({color:0xffffff,roughness:.32,metalness:.06}));
+floor.position.y=-.15;floor.receiveShadow=true;scene.add(floor);
+const rim=new THREE.Mesh(new THREE.TorusGeometry(4.75,.05,16,100),new THREE.MeshStandardMaterial({color:0xc4b5fd,roughness:.3,emissive:0x6d28d9,emissiveIntensity:.25}));
+rim.rotation.x=Math.PI/2;rim.position.y=.02;scene.add(rim);
+const base=new THREE.Mesh(new THREE.CylinderGeometry(5.2,5.4,.2,80),new THREE.MeshStandardMaterial({color:0xe0e7ff,roughness:.5}));
+base.position.y=-.4;base.receiveShadow=true;scene.add(base);
+const pad=new THREE.Mesh(new THREE.CylinderGeometry(1.25,1.3,.2,48),new THREE.MeshStandardMaterial({color:0xffffff,roughness:.35}));
+pad.position.set(6.4,-.05,3.2);pad.receiveShadow=true;scene.add(pad);
+const padRim=new THREE.Mesh(new THREE.TorusGeometry(1.25,.04,12,60),new THREE.MeshStandardMaterial({color:0xc4b5fd,emissive:0x6d28d9,emissiveIntensity:.2}));
+padRim.rotation.x=Math.PI/2;padRim.position.set(6.4,.06,3.2);scene.add(padRim);
+
+const perm=Array.from({length:MAX},(_,i)=>i);
+for(let i=MAX-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[perm[i],perm[j]]=[perm[j],perm[i]]}
+const rank=perm;
+
+const orbGeo=new THREE.SphereGeometry(.36,40,28);
+const colFav=new THREE.Color(0x7c3aed),colOth=new THREE.Color(0x93c5fd);
+const emFav=new THREE.Color(0x3b0f8c),emOth=new THREE.Color(0x0b2a5c);
+const orbs=[];
+for(let i=0;i<MAX;i++){
+ const mat=new THREE.MeshStandardMaterial({color:colOth.clone(),roughness:.2,metalness:.12,emissive:emOth.clone(),emissiveIntensity:.18});
+ const m=new THREE.Mesh(orbGeo,mat);
+ m.castShadow=true;m.receiveShadow=true;m.scale.setScalar(.001);m.position.set(0,.4,0);
+ scene.add(m);
+ orbs.push({m,tx:0,tz:0,ts:0,ph:Math.random()*6.28});
+}
+
+const marker=new THREE.Mesh(new THREE.TorusGeometry(.55,.04,12,48),new THREE.MeshBasicMaterial({color:0xf59e0b,transparent:true,opacity:0}));
+marker.rotation.x=Math.PI/2;scene.add(marker);
+
+function pipTexture(v){
+ const c=document.createElement('canvas');c.width=c.height=256;
+ const g=c.getContext('2d');
+ const grad=g.createLinearGradient(0,0,256,256);grad.addColorStop(0,'#ffffff');grad.addColorStop(1,'#e9e5ff');
+ g.fillStyle=grad;g.fillRect(0,0,256,256);
+ g.strokeStyle='#d8d0ff';g.lineWidth=8;g.strokeRect(4,4,248,248);
+ const P={1:[[1,1]],2:[[0,0],[2,2]],3:[[0,0],[1,1],[2,2]],4:[[0,0],[2,0],[0,2],[2,2]],5:[[0,0],[2,0],[1,1],[0,2],[2,2]],6:[[0,0],[2,0],[0,1],[2,1],[0,2],[2,2]]};
+ g.fillStyle='#5b21b6';
+ P[v].forEach(([a,b])=>{g.beginPath();g.arc(64+a*64,64+b*64,22,0,Math.PI*2);g.fill()});
+ const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return t;
+}
+const faceVals=[1,6,2,5,3,4];
+const die=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),faceVals.map(v=>new THREE.MeshStandardMaterial({map:pipTexture(v),roughness:.3,metalness:.05})));
+die.castShadow=true;die.receiveShadow=true;die.rotation.order='YXZ';
+die.position.set(6.4,.5,3.2);scene.add(die);
+const faceEuler={2:[0,0],5:[Math.PI,0],1:[0,Math.PI/2],6:[0,-Math.PI/2],3:[-Math.PI/2,0],4:[Math.PI/2,0]};
+let roll=null,dieVal=2,dieN=0,dieEven=0;
+
+let n=12,k=4,trials=0,hits=0,hist=[],flash=null,openKey=null;
+const clock=new THREE.Clock();
+const gcd=(a,b)=>b?gcd(b,a%b):a;
+
+function layout(){
+ const c=Math.min(1.05,3.9/Math.sqrt(n+.5));
+ orbs.forEach((o,i)=>{
+  if(i<n){const r=c*Math.sqrt(i+.5),a=i*2.399963;o.tx=Math.cos(a)*r;o.tz=Math.sin(a)*r;o.ts=1}
+  else{o.tx=0;o.tz=0;o.ts=0}
+ });
+}
+
+function toast(html,hit){
+ const t=$('toast');t.innerHTML=html;t.className='toast glass on'+(hit?' hit':'');
+ clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('on'),2200);
+}
+
+const cardData={
+ all:()=>['ผลลัพธ์ทั้งหมด = '+n+' แบบ','ทรงกลมทุกลูกบนแท่นคือผลลัพธ์ที่เป็นไปได้ทั้งหมด และมีโอกาสถูกเลือกเท่ากัน จำนวนนี้เป็นตัวหารในสูตร P(E)'],
+ fav:()=>['ผลลัพธ์ที่สนใจ = '+k+' แบบ',k?'ทรงกลมสีม่วงเรืองแสงคือผลลัพธ์ที่ทำให้เหตุการณ์ E เกิดขึ้น จำนวนนี้เป็นตัวตั้งในสูตร P(E)':'ตอนนี้ไม่มีผลลัพธ์ที่สนใจเลย เหตุการณ์นี้เป็นไปไม่ได้ จึงมี P(E) = 0'],
+ oth:()=>['ผลลัพธ์อื่น ๆ = '+(n-k)+' แบบ',(n-k)?'ทรงกลมสีฟ้าคือผลลัพธ์ที่ไม่ใช่เหตุการณ์ที่สนใจ ผลลัพธ์ที่สนใจ + ผลลัพธ์อื่น ๆ = ผลลัพธ์ทั้งหมด':'ทุกผลลัพธ์คือผลลัพธ์ที่สนใจ เหตุการณ์จึงเกิดขึ้นแน่นอน จึงมี P(E) = 1'],
+ die:()=>['ลูกเต๋า 1 ลูก: P(เลขคู่) = 3/6 = 1/2',roll?'กำลังทอย...':'ออกแต้ม '+dieVal+(dieVal%2?' ซึ่งไม่ใช่เลขคู่':' ซึ่งเป็นเลขคู่ ✓')+'<br>ทอยแล้ว '+dieN+' ครั้ง ได้เลขคู่ '+dieEven+' ครั้ง'+(dieN?' ('+(dieEven/dieN*100).toFixed(0)+'%)':'')]
+};
+function showCard(key){
+ openKey=key;
+ const d=cardData[key]();
+ $('cardT').textContent=d[0];$('cardB').innerHTML=d[1]+(key==='fav'||key==='all'?'<br><span class="big">P(E) = '+k+'/'+n+' = '+(k/n).toFixed(3)+'</span>':'');
+ $('card').classList.add('on');
+ document.querySelectorAll('.hs').forEach(h=>h.classList.toggle('act',h.dataset.k===key));
+}
+function hideCard(){openKey=null;$('card').classList.remove('on');document.querySelectorAll('.hs').forEach(h=>h.classList.remove('act'))}
+document.querySelectorAll('.hs').forEach(h=>h.addEventListener('click',()=>{
+ const key=h.dataset.k;
+ if(key==='die'){rollDie()}
+ if(openKey===key&&key!=='die'){hideCard()}else showCard(key);
+}));
+$('cardX').onclick=hideCard;
+
+function rollDie(){
+ if(roll)return;
+ const v=1+Math.floor(Math.random()*6);
+ const f=faceEuler[v];
+ const r=()=>2+Math.floor(Math.random()*2);
+ roll={t0:clock.getElapsedTime(),dur:1.6,v,
+  from:[die.rotation.x,die.rotation.y,die.rotation.z],
+  to:[f[0]+(f[0]?0:0)+Math.PI*2*r(),Math.floor(Math.random()*4)*Math.PI/2+Math.PI*2*r(),f[1]+Math.PI*2*r()]};
+ if(openKey==='die')showCard('die');
+}
+
+function update(){
+ const p=k/n;
+ $('totalVal').textContent=n;$('favVal').textContent=k;$('fav').max=n;
+ const g=k===0?n:gcd(k,n);
+ $('fraction').textContent=(k/g)+'/'+(n/g);
+ $('decimal').textContent=p.toFixed(3);$('percent').textContent=(p*100).toFixed(1)+'%';
+ $('favBar').style.width=(p*100)+'%';
+ $('favLabel').textContent='สนใจ '+k+' ผลลัพธ์';$('otherLabel').textContent='อื่น ๆ '+(n-k)+' ผลลัพธ์';
+ $('explain').textContent='มีผลลัพธ์ที่สนใจ '+k+' จากทั้งหมด '+n+' แบบ ดังนั้น P(E) = '+k+'/'+n+' = '+p.toFixed(3)+' หรือ '+(p*100).toFixed(1)+'%';
+ $('hudP').textContent=p.toFixed(3);
+ layout();
+ if(openKey)showCard(openKey);
+}
+$('total').addEventListener('input',()=>{n=+$('total').value;if(+$('fav').value>n)$('fav').value=n;k=+$('fav').value;update();resetTrials()});
+$('fav').addEventListener('input',()=>{k=+$('fav').value;update();resetTrials()});
+$('reset').onclick=()=>{$('total').value=12;$('fav').value=4;n=12;k=4;update();resetTrials()};
+$('example').onclick=()=>{n=2+Math.floor(Math.random()*29);k=Math.floor(Math.random()*(n+1));$('total').value=n;$('fav').value=k;update();resetTrials()};
+
+function drawChart(){
+ const c=$('chart'),g=c.getContext('2d'),W=c.width,H=c.height,pad=34;
+ g.clearRect(0,0,W,H);
+ g.font='20px IBM Plex Sans Thai, sans-serif';g.fillStyle='#5b5f8a';g.strokeStyle='rgba(124,58,237,.14)';g.lineWidth=1;
+ [0,.25,.5,.75,1].forEach(v=>{const y=H-pad-v*(H-pad*1.5);g.beginPath();g.moveTo(pad+10,y);g.lineTo(W-10,y);g.stroke();g.fillText(v,4,y+6)});
+ const y0=v=>H-pad-v*(H-pad*1.5);
+ g.setLineDash([10,8]);g.strokeStyle='#f59e0b';g.lineWidth=3;g.beginPath();g.moveTo(pad+10,y0(k/n));g.lineTo(W-10,y0(k/n));g.stroke();g.setLineDash([]);
+ if(!hist.length)return;
+ const L=hist.length,sx=i=>pad+10+(L<2?0:i/(L-1))*(W-pad-20);
+ g.strokeStyle='#7c3aed';g.lineWidth=4;g.lineJoin='round';g.beginPath();
+ hist.forEach((v,i)=>{i?g.lineTo(sx(i),y0(v)):g.moveTo(sx(i),y0(v))});g.stroke();
+ g.fillStyle='#7c3aed';g.beginPath();g.arc(sx(L-1),y0(hist[L-1]),7,0,Math.PI*2);g.fill();
+}
+function draw(){
+ $('trials').textContent=trials;$('hits').textContent=hits;$('hudT').textContent=trials;
+ $('relative').textContent=trials?(hits/trials*100).toFixed(1)+'%':'—';
+ if(trials){const th=k/n*100,ob=hits/trials*100;$('compare').textContent='ผลทดลองเกิดเหตุการณ์ '+ob.toFixed(1)+'% ขณะที่ค่าตามทฤษฎีเท่ากับ '+th.toFixed(1)+'% ผลต่าง '+Math.abs(ob-th).toFixed(1)+' จุดเปอร์เซ็นต์ ลองเพิ่มจำนวนครั้งเพื่อสังเกตแนวโน้ม'}
+ else $('compare').textContent='ยังไม่มีผลการทดลอง กดปุ่มเพื่อเริ่มสุ่ม';
+ drawChart();
+}
+function run(count){
+ let last=0,lastHit=false;
+ for(let i=0;i<count;i++){
+  last=Math.floor(Math.random()*n);lastHit=rank[last]<k;
+  trials++;if(lastHit)hits++;
+  hist.push(hits/trials);
+ }
+ if(hist.length>600)hist=hist.filter((_,i)=>i%2===0||i>hist.length-50);
+ flash={i:last,t0:clock.getElapsedTime(),hit:lastHit};
+ toast(lastHit?'สุ่มได้ลูกที่สนใจ ★ เกิดเหตุการณ์ E':'สุ่มได้ลูกอื่น ๆ ไม่เกิดเหตุการณ์ E',lastHit);
+ draw();
+}
+function resetTrials(){trials=0;hits=0;hist=[];flash=null;marker.material.opacity=0;draw()}
+$('once').onclick=()=>run(1);$('hundred').onclick=()=>run(100);$('clear').onclick=resetTrials;
+
+const questions=[
+ {q:'1. ทอยลูกเต๋ามาตรฐาน 1 ลูก ความน่าจะเป็นที่จะได้แต้ม 5 เท่ากับเท่าใด',o:['1/2','1/3','1/6','5/6'],a:2,e:'มีผลลัพธ์ทั้งหมด 6 แบบ และแต้ม 5 มีเพียง 1 แบบ จึงได้ P = 1/6'},
+ {q:'2. โยนเหรียญเที่ยงตรง 1 เหรียญ ความน่าจะเป็นที่จะออกหัวคือเท่าใด',o:['0','1/4','1/2','1'],a:2,e:'ผลลัพธ์ที่เป็นไปได้คือหัวและก้อย มี 2 แบบ และหัวมี 1 แบบ จึงเป็น 1/2'},
+ {q:'3. ถุงมีลูกบอลสีแดง 3 ลูก สีน้ำเงิน 2 ลูก หยิบ 1 ลูกแบบสุ่ม ความน่าจะเป็นที่จะได้สีแดงคือเท่าใด',o:['2/5','3/5','1/3','3/2'],a:1,e:'มีลูกบอลทั้งหมด 5 ลูก เป็นสีแดง 3 ลูก จึงได้ 3/5'},
+ {q:'4. ถ้าเหตุการณ์หนึ่งไม่มีโอกาสเกิดขึ้นเลย ความน่าจะเป็นมีค่าเท่าใด',o:['0','0.5','1','มากกว่า 1'],a:0,e:'เหตุการณ์ที่เป็นไปไม่ได้มีความน่าจะเป็นเท่ากับ 0'},
+ {q:'5. ข้อใดเป็นค่าความน่าจะเป็นที่เป็นไปได้',o:['-0.2','0.75','1.4','120%'],a:1,e:'ความน่าจะเป็นต้องอยู่ระหว่าง 0 ถึง 1 รวมปลายทั้งสอง ดังนั้น 0.75 เป็นค่าที่เป็นไปได้'},
+ {q:'6. สุ่มเลือกจำนวนเต็ม 1 จำนวนจาก 1 ถึง 10 โอกาสได้จำนวนคู่เท่ากับเท่าใด',o:['1/10','2/5','1/2','3/5'],a:2,e:'จำนวนคู่คือ 2, 4, 6, 8, 10 มี 5 จำนวน จากทั้งหมด 10 จำนวน จึงเป็น 5/10 = 1/2'},
+ {q:'7. วงล้อแบ่งเป็น 8 ช่องเท่า ๆ กัน มีช่องสีเขียว 2 ช่อง ความน่าจะเป็นที่ลูกศรหยุดช่องสีเขียวคือเท่าใด',o:['1/8','1/4','1/2','3/4'],a:1,e:'ช่องสีเขียว 2 ช่อง จากทั้งหมด 8 ช่อง ได้ 2/8 = 1/4'},
+ {q:'8. กล่องมีบัตรหมายเลข 1–5 สุ่มหยิบ 1 ใบ ความน่าจะเป็นที่จะได้เลขมากกว่า 3 คือเท่าใด',o:['1/5','2/5','3/5','4/5'],a:1,e:'เลขที่มากกว่า 3 คือ 4 และ 5 มี 2 ผลลัพธ์ จากทั้งหมด 5 ผลลัพธ์ จึงเป็น 2/5'},
+ {q:'9. ถ้า P(E) = 0.2 คิดเป็นร้อยละเท่าใด',o:['2%','20%','25%','80%'],a:1,e:'แปลงทศนิยมเป็นร้อยละโดยคูณ 100 ดังนั้น 0.2 × 100 = 20%'},
+ {q:'10. ทอยลูกเต๋ามาตรฐาน 1 ลูก เหตุการณ์ “ได้แต้มไม่เกิน 6” มีความน่าจะเป็นเท่าใด',o:['0','1/6','5/6','1'],a:3,e:'แต้มทุกหน้าของลูกเต๋ามีค่าไม่เกิน 6 จึงเป็นเหตุการณ์ที่เกิดขึ้นแน่นอน มีความน่าจะเป็น 1'}
+];
+let answers={};
+function renderQuiz(){
+ answers={};$('score').className='score';
+ $('quiz').innerHTML=questions.map((q,i)=>'<div class="qi"><h3>'+q.q+'</h3><div class="opts">'+q.o.map((v,j)=>'<button class="opt" data-q="'+i+'" data-a="'+j+'">'+'กขคง'[j]+'. '+v+'</button>').join('')+'</div><div class="fb" id="fb'+i+'">เลือกคำตอบหนึ่งข้อ</div></div>').join('');
+ document.querySelectorAll('.opt').forEach(b=>b.addEventListener('click',()=>{
+  const i=+b.dataset.q,j=+b.dataset.a;answers[i]=j;
+  document.querySelectorAll('.opt[data-q="'+i+'"]').forEach(x=>x.classList.remove('selected'));
+  b.classList.add('selected');$('fb'+i).textContent='บันทึกคำตอบแล้ว';$('fb'+i).className='fb';
+ }));
+}
+$('submitQuiz').onclick=()=>{
+ const s=$('score'),count=Object.keys(answers).length;
+ if(count<questions.length){s.className='score on';s.innerHTML='<b>ยังตอบไม่ครบ '+(questions.length-count)+' ข้อ</b><br>กรุณาเลือกคำตอบให้ครบทุกข้อก่อนสรุปคะแนน';return}
+ let score=0;
+ questions.forEach((q,i)=>{
+  const ch=answers[i],ok=ch===q.a;if(ok)score++;
+  document.querySelectorAll('.opt[data-q="'+i+'"]').forEach((b,j)=>{b.disabled=true;if(j===q.a)b.classList.add('correct');else if(j===ch)b.classList.add('wrong')});
+  $('fb'+i).textContent=(ok?'✓ ถูกต้อง · ':'✗ ยังไม่ถูก · ')+q.e;$('fb'+i).className='fb '+(ok?'good':'bad');
+ });
+ s.className='score on';
+ s.innerHTML='<strong>'+score+' / 10 คะแนน</strong><br>'+(score>=8?'ยอดเยี่ยม! เข้าใจเรื่องความน่าจะเป็นได้ดี':score>=5?'ทำได้ดี ลองทบทวนข้อที่ยังผิดอีกครั้ง':'ลองทบทวนสูตรและตัวอย่างในแท็บแนวคิด แล้วทำใหม่อีกครั้ง');
+ s.scrollIntoView({behavior:'smooth',block:'center'});
+};
+$('retry').onclick=()=>{renderQuiz();$('quiz').scrollIntoView({behavior:'smooth',block:'start'})};
+
+function goTab(id){
+ document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.p===id));
+ document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.id===id));
+ document.querySelector('.body').scrollTop=0;
+ if(id==='p3')drawChart();
+}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>goTab(t.dataset.p)));
+$('goLab').onclick=()=>goTab('p2');
+$('rollBtn').onclick=()=>{rollDie();showCard('die')};
+
+const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();
+let down=null;
+canvas.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY}});
+canvas.addEventListener('pointerup',e=>{
+ if(!down)return;
+ const moved=Math.hypot(e.clientX-down.x,e.clientY-down.y);down=null;
+ if(moved>5)return;
+ const r=canvas.getBoundingClientRect();
+ mouse.set(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1);
+ ray.setFromCamera(mouse,camera);
+ if(ray.intersectObject(die).length){rollDie();showCard('die');return}
+ const vis=orbs.slice(0,n).map(o=>o.m),hit=ray.intersectObjects(vis);
+ if(hit.length){
+  const i=vis.indexOf(hit[0].object);
+  flash={i,t0:clock.getElapsedTime(),hit:rank[i]<k};
+  toast(rank[i]<k?'ลูกนี้คือผลลัพธ์ที่สนใจ ★':'ลูกนี้คือผลลัพธ์อื่น ๆ',rank[i]<k);
+ }
+});
+
+const hsEls={all:$('hsAll'),fav:$('hsFav'),oth:$('hsOth'),die:$('hsDie')};
+const tmp=new THREE.Vector3();
+function place(el,x,y,z,show){
+ if(!show){el.style.transform='translate(-9999px,-9999px)';return}
+ tmp.set(x,y,z).project(camera);
+ if(tmp.z>1){el.style.transform='translate(-9999px,-9999px)';return}
+ const w=stage.clientWidth,h=stage.clientHeight;
+ el.style.transform='translate('+((tmp.x*.5+.5)*w-15)+'px,'+((-tmp.y*.5+.5)*h-15)+'px)';
+}
+function hotspots(){
+ let fx=0,fz=0,fc=0,ox=0,oz=0,oc=0;
+ for(let i=0;i<n;i++){
+  if(rank[i]<k){fx+=orbs[i].tx;fz+=orbs[i].tz;fc++}else{ox+=orbs[i].tx;oz+=orbs[i].tz;oc++}
+ }
+ place(hsEls.all,0,1.9,0,true);
+ place(hsEls.fav,fc?fx/fc:0,1.2,fc?fz/fc:0,fc>0);
+ place(hsEls.oth,oc?ox/oc:0,1.2,oc?oz/oc:0,oc>0);
+ place(hsEls.die,6.4,1.9,3.2,true);
+}
+
+function resize(){
+ const w=stage.clientWidth,h=stage.clientHeight;
+ renderer.setSize(w,h,false);
+ camera.aspect=w/h;
+ camera.fov=camera.aspect<1?62:camera.aspect<1.4?52:42;
+ camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stage);
+window.addEventListener('resize',resize);
+
+const ease=t=>1-Math.pow(1-t,3);
+function loop(){
+ requestAnimationFrame(loop);
+ const t=clock.getElapsedTime();
+ orbs.forEach((o,i)=>{
+  const m=o.m,fav=i<n&&rank[i]<k,mat=m.material;
+  m.position.x+=(o.tx-m.position.x)*.12;
+  m.position.z+=(o.tz-m.position.z)*.12;
+  let s=m.scale.x+(o.ts-m.scale.x)*.14;
+  let y=.37+(fav?.12+Math.sin(t*2+o.ph)*.07:0);
+  if(flash&&flash.i===i){
+   const d=t-flash.t0;
+   if(d<1.4){s*=1+.28*Math.sin(Math.min(d/1.4,1)*Math.PI);y+=.5*Math.sin(Math.min(d/1.4,1)*Math.PI)}
+  }
+  m.scale.setScalar(Math.max(s,.001));
+  m.position.y+=(y-m.position.y)*.2;
+  mat.color.lerp(fav?colFav:colOth,.12);
+  mat.emissive.lerp(fav?emFav:emOth,.12);
+  mat.emissiveIntensity+=((fav?.9:.18)-mat.emissiveIntensity)*.12;
+ });
+ if(flash&&flash.i<n){
+  const d=t-flash.t0,o=orbs[flash.i];
+  marker.position.set(o.m.position.x,.06,o.m.position.z);
+  const q=Math.min(d/2.2,1);
+  marker.scale.setScalar(1+q*.9);
+  marker.material.color.set(flash.hit?0xa855f7:0x3b82f6);
+  marker.material.opacity=q<1?.9*(1-q):0;
+ }
+ if(roll){
+  const q=Math.min((t-roll.t0)/roll.dur,1),e=ease(q);
+  die.rotation.x=roll.from[0]+(roll.to[0]-roll.from[0])*e;
+  die.rotation.y=roll.from[1]+(roll.to[1]-roll.from[1])*e;
+  die.rotation.z=roll.from[2]+(roll.to[2]-roll.from[2])*e;
+  die.position.y=.5+Math.abs(Math.sin(q*Math.PI*3))*1.5*(1-q);
+  if(q>=1){
+   die.position.y=.5;dieVal=roll.v;dieN++;if(dieVal%2===0)dieEven++;
+   toast('ลูกเต๋าออกแต้ม '+dieVal+(dieVal%2?'':' · เลขคู่ ✓'),dieVal%2===0);
+   roll=null;
+   if(openKey==='die')showCard('die');
+  }
+ }
+ controls.update();
+ hotspots();
+ renderer.render(scene,camera);
+}
+
+renderQuiz();
+resize();
+update();
+draw();
+loop();
+}
+</script>
+</body>
+</html>
